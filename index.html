@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Minhas Finanças</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;color:#111827}
+.app{max-width:520px;margin:auto;min-height:100vh;background:#f8fafc;padding-bottom:88px}
+header{background:#111827;color:#fff;padding:48px 22px 22px;border-radius:0 0 28px 28px}
+header .small{opacity:.7;font-size:13px}.brand{font-size:25px;font-weight:800;margin:5px 0 18px}
+.balance{font-size:34px;font-weight:800;margin:5px 0}.sub{font-size:13px;opacity:.72}
+.content{padding:18px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.card,.panel{background:#fff;border-radius:20px;padding:16px;box-shadow:0 4px 18px rgba(15,23,42,.06)}
+.label{font-size:12px;color:#6b7280}.value{font-size:20px;font-weight:800;margin-top:5px}.green{color:#15803d}.red{color:#dc2626}.blue{color:#2563eb}
+.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0}
+button{border:0;font:inherit;cursor:pointer}
+.action{background:#fff;border-radius:18px;padding:18px 12px;text-align:left;box-shadow:0 4px 18px rgba(15,23,42,.06);font-weight:750}
+.action span{display:block;font-size:24px;margin-bottom:8px}.action small{display:block;color:#6b7280;font-weight:500;margin-top:4px}
+.panel{margin-top:14px}.panel h3{margin:0 0 12px;font-size:16px}
+.progress{height:10px;background:#e5e7eb;border-radius:10px;overflow:hidden}.bar{height:100%;background:#2563eb;border-radius:10px;width:0}
+.row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eef0f3;font-size:14px}.row:last-child{border-bottom:0}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:76px;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid #e5e7eb;display:flex;justify-content:space-around;align-items:center;z-index:5}
+.nav{background:none;color:#6b7280;font-size:11px;text-align:center}.nav b{display:block;font-size:22px;margin-bottom:2px}.nav.active{color:#111827}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;align-items:flex-end;z-index:10}.sheet{background:#fff;width:100%;max-width:520px;margin:auto;border-radius:26px 26px 0 0;padding:22px 20px 30px}
+.sheet h2{margin:0 0 16px}.field{margin:10px 0}.field label{display:block;font-size:12px;color:#6b7280;margin-bottom:6px}.field input,.field select{width:100%;padding:14px;border:1px solid #e5e7eb;border-radius:14px;font-size:16px;background:#fff}
+.save{width:100%;padding:15px;border-radius:15px;background:#111827;color:#fff;font-weight:800;margin-top:8px}.cancel{width:100%;padding:12px;background:none;color:#6b7280}
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 16px;border-radius:14px;display:none;z-index:20;font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="small" id="date"></div>
+  <div class="brand">💰 Minhas Finanças</div>
+  <div class="small">Saldo disponível</div>
+  <div class="balance" id="balance">R$ 0,00</div>
+  <div class="sub">Controle simples, direto e feito para o iPhone.</div>
+</header>
+
+<main class="content">
+  <div class="cards">
+    <div class="card"><div class="label">Receitas</div><div class="value green" id="income">R$ 0,00</div></div>
+    <div class="card"><div class="label">Gastos</div><div class="value red" id="expense">R$ 0,00</div></div>
+  </div>
+
+  <div class="quick">
+    <button class="action" onclick="openModal('Gasto')"><span>➕</span>Adicionar gasto<small>Registrar uma despesa</small></button>
+    <button class="action" onclick="openModal('Receita')"><span>💵</span>Adicionar receita<small>Registrar dinheiro recebido</small></button>
+    <button class="action" onclick="showCards()"><span>💳</span>Cartões<small>Limites e faturas</small></button>
+    <button class="action" onclick="showBills()"><span>📅</span>Contas<small>Vencimentos</small></button>
+  </div>
+
+  <div class="panel">
+    <h3>🎯 Quanto posso gastar hoje?</h3>
+    <div class="value blue" id="daily">R$ 0,00</div>
+    <div class="label" style="margin:5px 0 10px">Estimativa baseada no saldo atual e nos dias restantes do mês.</div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+  </div>
+
+  <div class="panel">
+    <h3>🧾 Últimos lançamentos</h3>
+    <div id="transactions"><div class="label">Nenhum lançamento ainda.</div></div>
+  </div>
+
+  <div class="panel">
+    <h3>💳 Meus cartões</h3>
+    <div id="cards"><div class="label">Cadastre seus cartões para acompanhar limites.</div></div>
+  </div>
+</main>
+
+<nav class="bottom">
+  <button class="nav active"><b>⌂</b>Início</button>
+  <button class="nav" onclick="openModal('Gasto')"><b>＋</b>Gasto</button>
+  <button class="nav" onclick="openModal('Receita')"><b>＋</b>Receita</button>
+  <button class="nav" onclick="showCards()"><b>💳</b>Cartões</button>
+</nav>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2 id="modalTitle">Adicionar gasto</h2>
+    <div class="field"><label>Valor</label><input id="amount" type="number" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+    <div class="field"><label>Categoria</label><select id="category">
+      <option>Contas de casa</option><option>Mercado</option><option>Carro</option><option>Plano de Saúde</option><option>Cartão</option><option>Personal</option><option>MEI</option><option>Academia</option><option>Outros</option>
+    </select></div>
+    <div class="field"><label>Descrição</label><input id="description" placeholder="Ex.: supermercado"></div>
+    <button class="save" onclick="saveEntry()">Salvar</button>
+    <button class="cancel" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const key='mf_v1_data';
+let data=JSON.parse(localStorage.getItem(key)||'{"entries":[],"cards":[]}');
+let modalType='Gasto';
+const brl=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
+function save(){localStorage.setItem(key,JSON.stringify(data));render()}
+function render(){
+ const inc=data.entries.filter(x=>x.type==='Receita').reduce((a,x)=>a+x.amount,0);
+ const exp=data.entries.filter(x=>x.type==='Gasto').reduce((a,x)=>a+x.amount,0);
+ document.getElementById('income').textContent=brl(inc);
+ document.getElementById('expense').textContent=brl(exp);
+ document.getElementById('balance').textContent=brl(inc-exp);
+ const days=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate()-new Date().getDate()+1;
+ document.getElementById('daily').textContent=brl(Math.max(0,(inc-exp)/Math.max(days,1)));
+ document.getElementById('bar').style.width=Math.min(100,exp/(inc||1)*100)+'%';
+ const t=document.getElementById('transactions');
+ t.innerHTML=data.entries.slice(-5).reverse().map(x=>`<div class="row"><span>${x.type==='Gasto'?'🔴':'🟢'} ${x.description||x.category}</span><b>${x.type==='Gasto'?'-':'+'}${brl(x.amount)}</b></div>`).join('')||'<div class="label">Nenhum lançamento ainda.</div>';
+ const c=document.getElementById('cards');
+ c.innerHTML=data.cards.map(x=>`<div class="row"><span>💳 ${x.name}</span><b>${brl(x.limit)}</b></div>`).join('')||'<div class="label">Nenhum cartão cadastrado.</div>';
+}
+function openModal(type){modalType=type;document.getElementById('modalTitle').textContent=type==='Gasto'?'Adicionar gasto':'Adicionar receita';document.getElementById('modal').style.display='flex';document.getElementById('amount').focus()}
+function closeModal(){document.getElementById('modal').style.display='none';document.getElementById('amount').value='';document.getElementById('description').value=''}
+function saveEntry(){
+ const amount=parseFloat(document.getElementById('amount').value);
+ if(!amount||amount<=0){toast('Digite um valor válido');return}
+ data.entries.push({type:modalType,amount,category:document.getElementById('category').value,description:document.getElementById('description').value,date:new Date().toISOString()});
+ save();closeModal();toast('Lançamento salvo ✓');
+}
+function toast(s){const t=document.getElementById('toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',1800)}
+function showCards(){toast('Tela de cartões será a próxima etapa')}
+function showBills(){toast('Tela de contas será a próxima etapa')}
+document.getElementById('date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+render();
+</script>
+</body>
+</html>
